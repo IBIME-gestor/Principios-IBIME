@@ -23,8 +23,8 @@
   <div class="gate__shield" aria-hidden="true"></div>
   <div class="gate__card">
     <img class="gate__logo" src="assets/logo-ibime.png" alt="IBIME">
-    <h1 class="gate__title">Principios IBIME</h1>
-    <p class="gate__lead">Doce principios, uno por mes. Aquí se registra quién los vive.</p>
+    <h1 class="gate__title">IBIME</h1>
+    <p class="gate__lead">Principios institucionales y NEPO, en un solo lugar.</p>
 
     <button id="btn-login" class="btn btn--google">
       <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
@@ -47,17 +47,12 @@
   <aside class="rail">
     <div class="rail__brand">
       <img src="assets/escudo-ibime.png" alt="" class="rail__shield">
-      <span class="rail__name">Principios<br><b>IBIME</b></span>
+      <span class="rail__name" id="rail-marca">Principios<br><b>IBIME</b></span>
     </div>
 
-    <nav class="rail__nav" id="nav">
-      <a href="#/inicio"     data-nav="inicio"     class="navlink"><span class="navlink__ico">◈</span> Panel</a>
-      <a href="#/asistencia" data-nav="asistencia" class="navlink"><span class="navlink__ico">✓</span> Pase de lista</a>
-      <a href="#/consulta"   data-nav="consulta"   class="navlink"><span class="navlink__ico">▤</span> Consulta e informes</a>
-      <a href="#/principios" data-nav="principios" class="navlink admin-only"><span class="navlink__ico">❖</span> Principios del año</a>
-      <a href="#/alumnos"    data-nav="alumnos"    class="navlink admin-only"><span class="navlink__ico">☰</span> Base de alumnos</a>
-      <a href="#/usuarios"   data-nav="usuarios"   class="navlink admin-only"><span class="navlink__ico">⚑</span> Personas con acceso</a>
-    </nav>
+    <div id="mod-switch" class="modswitch" hidden></div>
+
+    <nav class="rail__nav" id="nav"></nav>
 
     <div class="rail__user">
       <img id="u-foto" class="avatar" alt="" src="assets/escudo-ibime.png" referrerpolicy="no-referrer">

@@ -59,3 +59,11 @@ export const CORREO = {
   urlAppsScript: "https://script.google.com/macros/s/AKfycbxzDk30dwbUEkGAr2uE6gcmlxraMQYX-Lgtu7k-4Xqp2SByV48YBJf67Lj7k3nyofhCzA/exec",   // termina en /exec
   clave: "EVENTOPRINCIPIOMESSEMTIEMBRE"          // debe ser IDÉNTICA a la del Apps Script
 };
+
+/* 6) NEPO — capacitaciones para familias.
+      Corrige aquí el nombre completo si hace falta; solo se muestra en pantalla. */
+export const NEPO = {
+  nombreCompleto: "Nepohualtzintzin",
+  /* Cada cuántos ms se espera entre un correo y el siguiente al enviar en lote. */
+  pausaEntreCorreos: 350
+};

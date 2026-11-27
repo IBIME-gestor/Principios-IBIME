@@ -1,7 +1,7 @@
 rules_version = '2';
 
 /* ============================================================
-   Valores IBIME — reglas de seguridad
+   IBIME — reglas de seguridad (Principios y NEPO)
    Cópialas completas en: Firebase → Firestore Database → Reglas.
 
    ANTES DE PUBLICAR cambia dos cosas:
@@ -47,6 +47,11 @@ service cloud.firestore {
       return delColegio() && (correo() in ADMINS() || perfil().rol == 'admin');
     }
 
+    /* Acceso al módulo NEPO: administración, o quien tenga NEPO en su lista de módulos. */
+    function nepo() {
+      return activo() && (admin() || ('nepo' in perfil().get('modulos', [])));
+    }
+
     /* ---------- personas con acceso ---------- */
     match /usuarios/{uid} {
       allow read: if request.auth.uid == uid || admin();
@@ -57,7 +62,8 @@ service cloud.firestore {
                     && request.resource.data.correo == correo()
                     && (request.resource.data.rol == 'colaborador'
                         || (request.resource.data.rol == 'admin' && correo() in ADMINS()))
-                    && request.resource.data.activo == true;
+                    && request.resource.data.activo == true
+                    && request.resource.data.get('modulos', ['principios']) == ['principios'];
 
       // cada quien refresca su nombre, foto y último acceso; el rol no
       allow update: if admin()
@@ -65,7 +71,8 @@ service cloud.firestore {
                         && (request.resource.data.rol == resource.data.rol
                             || correo() in ADMINS())
                         && request.resource.data.activo == resource.data.activo
-                        && request.resource.data.correo == resource.data.correo);
+                        && request.resource.data.correo == resource.data.correo
+                        && request.resource.data.get('modulos', []) == resource.data.get('modulos', []));
 
       allow delete: if false;   // el historial de accesos no se borra
     }
@@ -112,6 +119,57 @@ service cloud.firestore {
       // lo quita quien lo puso, o la administración
       allow delete: if admin()
                     || (activo() && resource.data.registradoPorUid == request.auth.uid);
+    }
+
+    /* ============================================================
+       NEPO — capacitaciones para familias
+       ============================================================ */
+    match /nepo_clases/{id} {
+      allow read:  if nepo();
+      allow write: if admin();
+    }
+
+    match /nepo_familiares/{id} {
+      allow read, create, update: if nepo();
+      allow delete: if admin();
+    }
+
+    match /nepo_inscripciones/{id} {
+      allow read, write: if nepo();
+    }
+
+    match /nepo_sesiones/{id} {
+      allow read, create, update: if nepo();
+      allow delete: if nepo();
+    }
+
+    /* Aquí sí se puede corregir una marca (presente ↔ falta). */
+    match /nepo_asistencias/{id} {
+      allow read: if nepo();
+      allow create, update: if nepo()
+                    && request.resource.data.registradoPorUid == request.auth.uid
+                    && id == request.resource.data.sesionId + '__' + request.resource.data.familiarId;
+      allow delete: if nepo();
+    }
+
+    /* Seguimiento: solo lo leen los docentes de esa clase y la administración. */
+    match /nepo_notas/{id} {
+      allow read:   if nepo() && (admin() || correo() in resource.data.docentes);
+      allow create: if nepo()
+                    && request.resource.data.autorCorreo == correo()
+                    && correo() in request.resource.data.docentes;
+      allow update, delete: if admin() || (nepo() && resource.data.autorCorreo == correo());
+    }
+
+    match /nepo_plantillas/{tipo} {
+      allow read:  if nepo();
+      allow write: if admin();
+    }
+
+    /* Bitácora de correos: se escribe una vez y no se modifica. */
+    match /nepo_correos/{id} {
+      allow read, create: if nepo();
+      allow update, delete: if false;
     }
 
     /* Todo lo demás queda cerrado. */

@@ -208,37 +208,114 @@ export function buscarAlumnos(texto, tope = 8) {
 }
 
 /* ============================================================
-   ENRUTADOR
+   MÓDULOS Y ENRUTADOR
+   Cada módulo vive en js/modulos/<módulo>/ y tiene sus propias pantallas.
+   Para sumar un módulo nuevo: crea su carpeta, agrégalo a MODULOS y listo.
+   Las direcciones son #/<módulo>/<pantalla>, por ejemplo #/nepo/clases.
    ============================================================ */
-const vistas = {
-  inicio:     () => import("./views/inicio.js"),
-  asistencia: () => import("./views/asistencia.js"),
-  consulta:   () => import("./views/consulta.js"),
-  principios: () => import("./views/principios.js"),
-  alumnos:    () => import("./views/alumnos.js"),
-  usuarios:   () => import("./views/usuarios.js")
+export const MODULOS = {
+  principios: {
+    nombre: "Principios",
+    marca: "Principios",
+    vistas: [
+      { id: "inicio",     texto: "Panel",               ico: "◈" },
+      { id: "asistencia", texto: "Pase de lista",       ico: "✓" },
+      { id: "consulta",   texto: "Consulta e informes", ico: "▤" },
+      { id: "anio",       texto: "Principios del año",  ico: "❖", admin: true },
+      { id: "alumnos",    texto: "Base de alumnos",     ico: "☰", admin: true }
+    ]
+  },
+  nepo: {
+    nombre: "NEPO",
+    marca: "NEPO",
+    vistas: [
+      { id: "inicio",     texto: "Panel",               ico: "◈" },
+      { id: "clases",     texto: "Clases",              ico: "❖" },
+      { id: "familias",   texto: "Familias",            ico: "☰" },
+      { id: "asistencia", texto: "Pase de lista",       ico: "✓" },
+      { id: "informes",   texto: "Informes",            ico: "▤" },
+      { id: "plantillas", texto: "Plantillas de correo", ico: "✉", admin: true }
+    ]
+  }
 };
-const soloAdmin = ["principios", "alumnos", "usuarios"];
+/* Pantallas que sirven a todos los módulos. */
+const COMUN = { vistas: [{ id: "usuarios", texto: "Personas con acceso", ico: "⚑", admin: true }] };
+
+/* Quien no tiene lista de módulos (cuentas anteriores) entra a Principios, como siempre. */
+export const modulosDe = () =>
+  esAdmin() ? Object.keys(MODULOS) : (estado.perfil?.modulos ?? ["principios"]).filter(m => MODULOS[m]);
+export const tieneModulo = m => modulosDe().includes(m);
+export const parametros = () => new URLSearchParams(location.hash.split("?")[1] || "");
 
 export function titulo(t, sub = "") {
   $("#view-title").textContent = t;
   $("#view-sub").textContent = sub;
-  document.title = `${t} · Principios IBIME`;
+  document.title = `${t} · IBIME`;
 }
 
 let vistaActual = null;
+const LLAVE_MODULO = "ibime.modulo";
+
+function resolverRuta() {
+  const permitidos = modulosDe();
+  const [pura] = location.hash.replace(/^#\//, "").split("?");
+  let [mod, vista] = pura.split("/");
+
+  /* Enlaces de antes (#/asistencia) apuntan a Principios. */
+  if (mod && mod !== "comun" && !MODULOS[mod]) { vista = mod; mod = "principios"; }
+
+  const recordado = localStorage.getItem(LLAVE_MODULO);
+  if (!mod) mod = permitidos.includes(recordado) ? recordado : (permitidos[0] || "principios");
+
+  if (mod === "comun") {
+    if (!COMUN.vistas.some(v => v.id === vista)) vista = "usuarios";
+    return { mod, vista, modNav: permitidos.includes(recordado) ? recordado : permitidos[0], def: COMUN.vistas.find(v => v.id === vista) };
+  }
+  const lista = MODULOS[mod].vistas;
+  if (!lista.some(v => v.id === vista)) vista = "inicio";
+  return { mod, vista, modNav: mod, def: lista.find(v => v.id === vista) };
+}
+
+function pintarNav(modNav, mod, vista) {
+  const permitidos = modulosDe();
+  const sw = $("#mod-switch");
+  sw.hidden = permitidos.length < 2;
+  sw.innerHTML = permitidos.map(m =>
+    `<a href="#/${m}/inicio" class="modswitch__op ${m === modNav ? "is-on" : ""}">${esc(MODULOS[m].nombre)}</a>`).join("");
+
+  const items = [
+    ...MODULOS[modNav].vistas.map(v => ({ ...v, mod: modNav })),
+    ...COMUN.vistas.map(v => ({ ...v, mod: "comun" }))
+  ].filter(v => !v.admin || esAdmin());
+
+  $("#nav").innerHTML = items.map(v =>
+    `<a href="#/${v.mod}/${v.id}" class="navlink ${v.mod === mod && v.id === vista ? "is-on" : ""}">
+       <span class="navlink__ico">${v.ico}</span> ${esc(v.texto)}</a>`).join("");
+  $("#rail-marca").innerHTML = `${esc(MODULOS[modNav].marca)}<br><b>IBIME</b>`;
+}
 
 async function enrutar() {
-  const ruta = (location.hash.replace(/^#\//, "").split("?")[0]) || "inicio";
-  const nombre = vistas[ruta] ? ruta : "inicio";
-
-  if (soloAdmin.includes(nombre) && !esAdmin()) {
-    avisar("Esa sección es solo para la administración.", "aviso");
-    location.hash = "#/inicio";
+  if (!modulosDe().length) {
+    $("#view").innerHTML = `<div class="caja"><h2>Aún no tienes módulos asignados</h2>
+      <p style="margin-top:8px;color:var(--tinta-suave)">Pide a la administración que te dé acceso.</p></div>`;
     return;
   }
 
-  $$("#nav .navlink").forEach(a => a.classList.toggle("is-on", a.dataset.nav === nombre));
+  const { mod, vista, modNav, def } = resolverRuta();
+
+  if (mod !== "comun" && !tieneModulo(mod)) {
+    avisar("No tienes acceso a ese módulo.", "aviso");
+    location.hash = `#/${modulosDe()[0]}/inicio`;
+    return;
+  }
+  if (def.admin && !esAdmin()) {
+    avisar("Esa sección es solo para la administración.", "aviso");
+    location.hash = `#/${modNav}/inicio`;
+    return;
+  }
+
+  if (mod !== "comun") localStorage.setItem(LLAVE_MODULO, mod);
+  pintarNav(modNav, mod, vista);
   cerrarMenu();
 
   const cont = $("#view");
@@ -246,9 +323,9 @@ async function enrutar() {
 
   try {
     vistaActual?.salir?.();
-    const mod = await vistas[nombre]();
-    vistaActual = mod;
-    await mod.render(cont);
+    const mdl = await import(`./modulos/${mod}/${vista}.js`);
+    vistaActual = mdl;
+    await mdl.render(cont);
     cont.scrollIntoView({ block: "start" });
     window.scrollTo({ top: 0 });
   } catch (err) {

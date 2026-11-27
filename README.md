@@ -117,7 +117,10 @@ js/config.js               ÚNICO archivo que necesitas editar
 js/firebase.js             conexión
 js/app.js                  sesión, roles, catálogo, navegación
 js/utils.js                avisos, diálogos, exportación, imágenes
-js/views/                  las seis pantallas
+js/modulos/principios/     pantallas de Principios (sin cambios de comportamiento)
+js/modulos/nepo/           pantallas y lógica de NEPO
+js/modulos/comun/          pantallas de todos los módulos (personas con acceso)
+apps-script/               recordatorio automático de NEPO (se pega en Apps Script)
 ```
 
 ### Colecciones en Firestore
@@ -130,8 +133,57 @@ js/views/                  las seis pantallas
 | `actividades/{id}` | cada evento donde se pasa lista |
 | `asistencias/{actividad__matricula}` | un registro por alumno y actividad |
 | `meta/alumnos` | versión del catálogo, para refrescar los dispositivos |
+| `nepo_clases/{id}` | cada clase: plantel, ciclo, horario y correos de sus docentes |
+| `nepo_familiares/{id}` | catálogo de familiares: contacto, familia y alumnos vinculados |
+| `nepo_inscripciones/{clase__familiar}` | quién está inscrito en qué clase |
+| `nepo_sesiones/{id}` | cada sesión de una clase, su estado y si ya se mandó el recordatorio |
+| `nepo_asistencias/{sesión__familiar}` | presente, falta o justificada (se puede corregir) |
+| `nepo_notas/{id}` | seguimiento: comentarios del docente, solo visibles para docentes de la clase y administración |
+| `nepo_plantillas/{tipo}` | los cuatro HTML de correo: recordatorio, asistencia, falta y aviso general |
+| `nepo_correos/{tipo__sesión__familiar}` | bitácora para no repetir un mismo correo |
 
 El identificador de cada asistencia impide, por diseño, que un alumno quede registrado dos veces en la misma actividad.
+
+---
+
+## Módulo NEPO
+
+El sistema tiene dos módulos: **Principios** (como siempre) y **NEPO** (capacitaciones para familias).
+Quien tiene ambos ve un selector arriba del menú. Se asignan en **Personas con acceso**: cada persona
+tiene botones de módulo. Las cuentas anteriores siguen entrando solo a Principios.
+
+### Cómo se usa
+
+1. **Administración** crea las **clases** (plantel, ciclo, horario) y anota los correos de sus docentes.
+2. Se cargan las **familias**: una por una o con un Excel (columnas `FAMILIAR`, `PARENTESCO`, `CORREO`, `TELEFONO`, `FAMILIA`, `MATRICULAS`, `PLANTEL`, `CLASE`). Quienes comparten el nombre en `FAMILIA` se suman en los informes por familia.
+3. El docente abre su clase, crea las **sesiones** (puede crear varias semanas de golpe) e inscribe familiares.
+4. En **Pase de lista** marca Presente, Falta o Justificada. Al marcar presente sale el correo de asistencia confirmada. Al **cerrar la sesión**, quien no tenga marca queda como falta y recibe el correo “te extrañamos”.
+5. En cada familiar hay una ficha con su asistencia, la de su familia y los comentarios de seguimiento.
+6. **Informes**: por familiar, familia, clase, sesión y detalle, con filtro de periodo, plantel y clase; descarga en Excel o CSV.
+
+### Plantillas de correo
+
+En **Plantillas de correo** (solo administración) hay cuatro espacios: recordatorio, asistencia confirmada, falta y aviso general.
+Sube tu HTML y escribe el asunto. Marcadores disponibles dentro del HTML:
+`{{NOMBRE_FAMILIAR}} {{NOMBRE_ALUMNO}} {{CLASE}} {{PLANTEL}} {{DOCENTE}} {{FECHA}} {{HORA}} {{LUGAR}} {{TEMA}} {{ASISTENCIAS}} {{FALTAS}} {{MENSAJE}}`.
+`{{MENSAJE}}` es el texto libre que el docente escribe al mandar un aviso general. Cada espacio tiene vista previa y botón de prueba a tu correo.
+
+### Recordatorio automático (una sola vez)
+
+El botón “Recordatorio” de cada sesión funciona de inmediato. Para que además salga solo un día antes:
+
+1. Abre el proyecto de Apps Script donde ya tienes el envío de correos. Crea un archivo nuevo y pega `apps-script/recordatorios-nepo.gs`.
+2. En ⚙ **Configuración del proyecto**, marca “Mostrar el archivo de manifiesto appsscript.json” y reemplaza su contenido con `apps-script/appsscript.json`.
+3. En esa misma pantalla, en **Proyecto de Google Cloud**, cambia al proyecto de Firebase (`valores-ibime`) escribiendo su número de proyecto. Está en Firebase → ⚙ Configuración del proyecto.
+4. En Google Cloud → IAM, da a la cuenta que ejecuta el script el rol **Usuario de Cloud Datastore** (así el script puede leer y escribir en Firestore).
+5. En el editor, ejecuta una vez la función `instalarDisparador` y acepta los permisos. Queda programado a diario (por defecto a las 8:00).
+6. Para probar, crea una sesión para mañana y ejecuta a mano `enviarRecordatoriosNepo`; revisa **Registros de ejecución**.
+
+El correo no se repite: lo evita la bitácora `nepo_correos` y la marca de la sesión. Las cuotas diarias de envío de Apps Script dependen del tipo de cuenta; si el colegio tiene muchas familias, conviene revisarlas.
+
+### Reglas de Firestore
+
+Las reglas nuevas ya están en `firestore.rules`: cópialas completas de nuevo en la consola. Además impiden que alguien se asigne módulos a sí mismo.
 
 ---
 

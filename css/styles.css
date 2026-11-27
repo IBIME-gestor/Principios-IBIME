@@ -553,3 +553,30 @@ tbody tr:hover{ background:#F8FAFC; }
   tbody tr{ break-inside:avoid; }
   @page{ margin:14mm; }
 }
+
+
+/* ============================================================
+   Módulos y NEPO
+   ============================================================ */
+.modswitch{ display:flex; gap:4px; padding:4px; margin:0 0 14px; background:rgba(255,255,255,.08); border-radius:var(--r-s); }
+.modswitch[hidden]{ display:none; }
+.modswitch__op{ flex:1; text-align:center; padding:9px 8px; border-radius:6px; color:#BDD1E2; text-decoration:none; font-size:.86rem; font-weight:600; transition:background .15s ease,color .15s ease; }
+.modswitch__op:hover{ color:#fff; }
+.modswitch__op.is-on{ background:#fff; color:var(--navy); }
+
+.filaasis{ display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; padding:12px 16px; border-bottom:1px solid var(--linea); }
+.filaasis:last-child{ border-bottom:0; }
+.filaasis__quien{ min-width:0; flex:1 1 220px; }
+.filaasis__quien strong{ display:block; font-size:.96rem; color:var(--navy); }
+.filaasis__quien span{ font-size:.8rem; color:var(--tinta-suave); }
+.seg{ display:inline-flex; border:1px solid var(--linea); border-radius:var(--r-s); overflow:hidden; background:#fff; }
+.seg button{ min-height:42px; padding:0 14px; border:0; background:transparent; font:inherit; font-size:.86rem; font-weight:600; color:var(--tinta-suave); cursor:pointer; border-right:1px solid var(--linea); }
+.seg button:last-child{ border-right:0; }
+.seg button.on-presente{ background:var(--verde-claro); color:var(--verde); }
+.seg button.on-falta{ background:var(--rojo-claro); color:var(--rojo-hondo); }
+.seg button.on-justificada{ background:var(--ambar-claro); color:var(--ambar); }
+.pestanas{ display:flex; gap:6px; flex-wrap:wrap; }
+.nota{ border-left:3px solid var(--rojo); background:#fff; padding:10px 14px; border-radius:0 var(--r-s) var(--r-s) 0; margin-bottom:10px; box-shadow:var(--sombra-baja); }
+.nota small{ color:var(--tinta-suave); display:block; margin-bottom:4px; }
+.preview{ width:100%; min-height:260px; border:1px solid var(--linea); border-radius:var(--r-s); background:#fff; }
+.cols2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; }

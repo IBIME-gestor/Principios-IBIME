@@ -9,7 +9,9 @@
       ".github/**",
       "README.md",
       "firestore.rules",
-      "plantilla-alumnos.xlsx"
+      "apps-script/**",
+      "plantilla-alumnos.xlsx",
+      "plantilla-familiares.xlsx"
     ],
     "rewrites": [
       {
