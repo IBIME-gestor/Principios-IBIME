@@ -28,6 +28,12 @@ async function listado(cont) {
   cont.innerHTML = `
     <div class="cascada">
       <div class="caja">
+        <div class="caja__cab"><div><h2>Buscar alumno por matrícula</h2>
+          <p>Escribe la matrícula: verás los datos del alumno y quién de su familia ya está registrado.</p></div></div>
+        <div class="campo"><input id="m-mat" type="search" placeholder="Matrícula del alumno" autocomplete="off" inputmode="text"></div>
+        <div id="m-res" style="margin-top:14px"></div>
+      </div>
+      <div class="caja">
         <div class="caja__cab"><div><h2>Familiares</h2><p>${familiares.length} registrados. Toca un nombre para ver su seguimiento.</p></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn--suave" id="b-importar">Importar Excel</button>
@@ -39,13 +45,13 @@ async function listado(cont) {
 
   const pinta = () => {
     const q = norm($("#f-buscar").value);
-    const lista = familiares.filter(f => !q || norm([f.nombre, f.familia, f.alumnosTxt, f.plantel].join(" ")).includes(q));
+    const lista = familiares.filter(f => !q || norm([f.nombre, f.familia, f.alumnosTxt, f.plantel, (f.niveles || []).join(" ")].join(" ")).includes(q));
     $("#tabla").innerHTML = lista.length ? `<div class="tablabox"><table>
-      <thead><tr><th>Familiar</th><th>Familia</th><th>Parentesco</th><th>Alumnos</th><th>Plantel</th><th>Correo</th></tr></thead>
+      <thead><tr><th>Familiar</th><th>Familia</th><th>Parentesco</th><th>Alumnos</th><th>Plantel</th><th>Nivel</th><th>Correo</th></tr></thead>
       <tbody>${lista.map(f => `<tr>
         <td><a href="#/nepo/familias?id=${f.id}"><strong>${esc(f.nombre)}</strong></a>${f.activo === false ? ` <span class="pill">Baja</span>` : ""}</td>
         <td>${esc(f.familia || "—")}</td><td>${esc(f.parentesco || "—")}</td>
-        <td style="font-size:.84rem">${esc(f.alumnosTxt || "—")}</td><td>${esc(f.plantel || "—")}</td>
+        <td style="font-size:.84rem">${esc(f.alumnosTxt || "—")}</td><td>${esc(f.plantel || "—")}</td><td style="font-size:.84rem">${esc((f.niveles || []).join(", ") || "—")}</td>
         <td style="font-size:.84rem">${f.correo ? esc(f.correo) : `<span class="pill pill--alerta">Sin correo</span>`}</td></tr>`).join("")}
       </tbody></table></div>`
       : vacio({ titulo: "Sin resultados", texto: "Agrega familiares uno por uno o importa un Excel." });
@@ -54,17 +60,43 @@ async function listado(cont) {
   $("#f-buscar").addEventListener("input", rebote(pinta));
   $("#b-nuevo").addEventListener("click", () => formFamiliar(null, () => render(cont)));
   $("#b-importar").addEventListener("click", () => importar(cont));
+  $("#m-mat").addEventListener("input", rebote(() => buscarAlumno(cont)));
+}
+
+/* ---------- buscar por matrícula ---------- */
+async function buscarAlumno(cont) {
+  const m = limpiaMatricula($("#m-mat").value), cuadro = $("#m-res");
+  if (m.length < 3) { cuadro.innerHTML = ""; return; }
+  if (!estado.catalogoListo) await cargarCatalogo();
+  const a = estado.porMatricula.get(m);
+  if (!a) { cuadro.innerHTML = `<div class="aviso aviso--ambar"><div>No encontré la matrícula <strong>${esc(m)}</strong> en la Base de alumnos.</div></div>`; return; }
+
+  const suyos = familiares.filter(f => (f.matriculas || []).includes(m));
+  cuadro.innerHTML = `
+    <div class="cols2">
+      <div class="dato"><b style="font-size:1.15rem">${esc(a.nombre)}</b>
+        <span>${esc([a.nivel, a.plantel].filter(Boolean).join(" · "))}${a.grado ? ` · Grado ${esc(a.grado)}` : ""}${a.grupo ? ` · Grupo ${esc(a.grupo)}` : ""}</span></div>
+      <div>${suyos.length
+        ? `<p style="font-size:.88rem;margin-bottom:8px"><strong>Familiares registrados (${suyos.length}):</strong></p>` + suyos.map(f =>
+            `<p style="font-size:.9rem"><a href="#/nepo/familias?id=${f.id}"><strong>${esc(f.nombre)}</strong></a> ${esc(f.parentesco ? "· " + f.parentesco : "")}</p>`).join("")
+        : `<p style="font-size:.9rem;color:var(--tinta-suave)">Este alumno aún no tiene familiares registrados.</p>`}
+        <button class="btn btn--chico" id="m-nuevo" style="margin-top:10px">Agregar familiar de este alumno</button></div>
+    </div>`;
+  $("#m-nuevo").addEventListener("click", () => formFamiliar(null, () => render(cont), { matricula: m }));
 }
 
 /* ---------- resolver alumnos y familia ---------- */
 async function resolverAlumnos(txt) {
   if (!estado.catalogoListo) await cargarCatalogo();
-  const mats = String(txt || "").split(/[\s,;]+/).map(limpiaMatricula).filter(Boolean);
+  const mats = [...new Set(String(txt || "").split(/[\s,;]+/).map(limpiaMatricula).filter(Boolean))];
   const alumnos = mats.map(m => estado.porMatricula.get(m)).filter(Boolean);
+  const unicos = campo => [...new Set(alumnos.map(a => String(a[campo] || "").trim()).filter(Boolean))];
   return {
     matriculas: mats,
+    alumnos,
     alumnosTxt: alumnos.map(a => a.nombre).join(", "),
-    plantel: alumnos[0]?.plantel || "",
+    plantel: unicos("plantel").join(" / "),
+    niveles: unicos("nivel"),
     noEncontradas: mats.filter(m => !estado.porMatricula.has(m))
   };
 }
@@ -74,12 +106,12 @@ function datosFamiliar(b, al) {
   return {
     nombre: b.nombre.trim(), parentesco: (b.parentesco || "").trim(), correo: (b.correo || "").trim().toLowerCase(),
     telefono: (b.telefono || "").trim(), familia, familiaId: familia ? clave(familia) : "",
-    matriculas: al.matriculas, alumnosTxt: al.alumnosTxt, plantel: (b.plantel || "").trim() || al.plantel
+    matriculas: al.matriculas, alumnosTxt: al.alumnosTxt, niveles: al.niveles, plantel: (b.plantel || "").trim() || al.plantel
   };
 }
 
 /* ---------- alta y edición ---------- */
-function formFamiliar(f, alTerminar) {
+function formFamiliar(f, alTerminar, inicial = {}) {
   const familias = [...new Set(familiares.map(x => x.familia).filter(Boolean))].sort();
   abrirModal({
     titulo: f ? "Editar familiar" : "Nuevo familiar",
@@ -96,11 +128,24 @@ function formFamiliar(f, alTerminar) {
         <datalist id="p-familias">${familias.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
         <small>Quienes comparten el mismo nombre de familia se suman en los informes por familia.</small></div>
       <div class="campo"><label>Matrículas de sus alumnos</label>
-        <input id="p-mats" value="${esc((f?.matriculas || []).join(", "))}" placeholder="Separadas por coma"></div>
-      <div class="campo"><label>Plantel</label><input id="p-plantel" value="${esc(f?.plantel || "")}"></div>
+        <input id="p-mats" value="${esc((f?.matriculas || (inicial.matricula ? [inicial.matricula] : [])).join(", "))}" placeholder="Separadas por coma">
+        <div id="p-prev" style="margin-top:8px;font-size:.84rem;color:var(--tinta-suave)"></div></div>
+      <div class="campo"><label>Plantel</label><input id="p-plantel" value="${esc(f?.plantel || "")}" placeholder="Se llena solo con el plantel de sus alumnos">
+        <small>Si lo dejas vacío se toma de las matrículas, aunque sus hijos estén en planteles distintos.</small></div>
       ${f ? "" : `<div class="campo"><label>Inscribir en la clase</label>
         <select id="p-clase"><option value="">— más tarde —</option>${clases.map(c => `<option value="${c.id}">${esc(c.nombre)} · ${esc(c.plantel || "")}</option>`).join("")}</select></div>`}
     </div>`,
+    alAbrir: dlg => {
+      const prev = async () => {
+        const al = await resolverAlumnos($("#p-mats", dlg).value);
+        $("#p-prev", dlg).innerHTML = al.alumnos.map(a =>
+          `✓ <strong>${esc(a.nombre)}</strong> · ${esc([a.nivel, a.plantel].filter(Boolean).join(" · "))}`).join("<br>")
+          + (al.noEncontradas.length ? `<br><span style="color:var(--rojo)">No encontré: ${esc(al.noEncontradas.join(", "))}</span>` : "");
+        const pl = $("#p-plantel", dlg); if (!f && !pl.dataset.tocado) pl.value = al.plantel;
+      };
+      $("#p-plantel", dlg).addEventListener("input", e => { e.target.dataset.tocado = "1"; });
+      $("#p-mats", dlg).addEventListener("input", rebote(prev)); prev();
+    },
     acciones: [
       { texto: "Cancelar" },
       ...(f && esAdmin() ? [{ texto: f.activo === false ? "Reactivar" : "Dar de baja", fn: async () => {
@@ -227,7 +272,7 @@ async function ficha(cont, id) {
         <div class="caja"><div class="caja__cab"><div><h2>Datos</h2></div></div>
           <p style="font-size:.92rem;line-height:1.7">
             <strong>Correo:</strong> ${esc(f.correo || "—")}<br><strong>Teléfono:</strong> ${esc(f.telefono || "—")}<br>
-            <strong>Plantel:</strong> ${esc(f.plantel || "—")}<br><strong>Alumnos:</strong> ${esc(f.alumnosTxt || (f.matriculas || []).join(", ") || "—")}<br>
+            <strong>Plantel:</strong> ${esc(f.plantel || "—")}<br><strong>Nivel:</strong> ${esc((f.niveles || []).join(", ") || "—")}<br><strong>Alumnos:</strong> ${esc(f.alumnosTxt || (f.matriculas || []).join(", ") || "—")}<br>
             <strong>Clases:</strong> ${clasesIns.map(i => esc(i.claseNombre)).join(", ") || "—"}</p>
           ${hermanos.length ? `<p style="margin-top:12px;font-size:.88rem"><strong>Otros de la familia:</strong> ${hermanos.map(h =>
             `<a href="#/nepo/familias?id=${h.id}">${esc(h.nombre)}</a>`).join(", ")}</p>` : ""}
