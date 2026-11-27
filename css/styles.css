@@ -580,3 +580,79 @@ tbody tr:hover{ background:#F8FAFC; }
 .nota small{ color:var(--tinta-suave); display:block; margin-bottom:4px; }
 .preview{ width:100%; min-height:260px; border:1px solid var(--linea); border-radius:var(--r-s); background:#fff; }
 .cols2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; }
+
+/* ============================================================
+   Tema NEPO — colores y figuras del banner principal
+   azul marino #003B5B · rojo #B0231C / #D3222A · turquesa #23BDC5 · amarillo #F4B125
+   El protagonista es el niño con su ábaco.
+   ============================================================ */
+body[data-modulo="nepo"]{
+  --nepo-azul:#003B5B; --nepo-azul-hondo:#002C45; --nepo-rojo:#B0231C; --nepo-rojo-vivo:#D3222A;
+  --nepo-turq:#23BDC5; --nepo-turq-hondo:#0B6B74; --nepo-turq-claro:#E2F5F6; --nepo-amarillo:#F4B125; --nepo-crema:#FBF4E4;
+}
+/* Barra lateral: azul del banner, con la ola roja y los aros turquesa */
+body[data-modulo="nepo"] .rail{
+  background:
+    radial-gradient(circle at 12% 104%, rgba(35,189,197,.22) 0 90px, transparent 91px),
+    linear-gradient(185deg, #004A70 0%, var(--nepo-azul) 58%, var(--nepo-azul-hondo) 100%);
+}
+body[data-modulo="nepo"] .rail::before{
+  content:""; position:absolute; left:0; right:0; top:0; height:6px;
+  background:linear-gradient(90deg, var(--nepo-rojo) 0 40%, var(--nepo-amarillo) 40% 55%, var(--nepo-turq) 55% 100%);
+}
+body[data-modulo="nepo"] .rail__shield{ width:auto; height:58px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35)); margin:-6px 0; }
+body[data-modulo="nepo"] .navlink.is-on{ box-shadow:inset 3px 0 0 var(--nepo-amarillo); background:rgba(35,189,197,.18); }
+body[data-modulo="nepo"] .navlink.is-on .navlink__ico{ color:var(--nepo-amarillo); }
+body[data-modulo="nepo"] .modswitch__op.is-on{ background:var(--nepo-amarillo); color:var(--nepo-azul-hondo); }
+
+/* Barra superior con la franja de color del banner */
+body[data-modulo="nepo"] .topbar{ border-bottom:0; box-shadow:0 3px 0 var(--nepo-rojo), 0 6px 0 var(--nepo-turq); }
+body[data-modulo="nepo"] .topbar h1{ color:var(--nepo-azul); }
+
+/* Fondo con el motivo del ábaco, muy tenue */
+body[data-modulo="nepo"] .work{
+  background-color:var(--papel);
+  background-image:
+    radial-gradient(ellipse 13px 8px at 14px 12px, rgba(176,35,28,.045) 0 99%, transparent 100%),
+    radial-gradient(ellipse 13px 8px at 42px 32px, rgba(35,189,197,.07) 0 99%, transparent 100%);
+  background-size:56px 40px;
+}
+body[data-modulo="nepo"] .caja{ border-top:3px solid var(--nepo-turq); }
+body[data-modulo="nepo"] .caja:nth-of-type(even){ border-top-color:var(--nepo-rojo); }
+body[data-modulo="nepo"] .btn--suave{ background:var(--nepo-turq-claro); color:var(--nepo-turq-hondo); }
+body[data-modulo="nepo"] .btn--suave:hover{ background:#CDEEF0; }
+body[data-modulo="nepo"] .dato{ border-bottom:3px solid var(--nepo-turq); }
+body[data-modulo="nepo"] .dato--rojo{ border-bottom-color:var(--nepo-rojo); }
+body[data-modulo="nepo"] .dato--rojo b{ color:var(--nepo-rojo); }
+body[data-modulo="nepo"] .dato b{ color:var(--nepo-azul); }
+body[data-modulo="nepo"] .dato--rojo b{ color:var(--nepo-rojo); }
+body[data-modulo="nepo"] .seg button.on-presente{ background:var(--nepo-turq-claro); color:var(--nepo-turq-hondo); }
+body[data-modulo="nepo"] .seg button.on-justificada{ background:#FDF0CF; color:#8A5A00; }
+body[data-modulo="nepo"] .nota{ border-left-color:var(--nepo-amarillo); }
+
+/* El niño en lugar del escudo cuando no hay nada que mostrar */
+body[data-modulo="nepo"] .vacio img{ width:112px; opacity:1; filter:none; }
+
+/* Portada del panel */
+.nepohero{ position:relative; border-radius:var(--r-l); overflow:hidden; box-shadow:var(--sombra-alta); background:#003B5B; }
+.nepohero img{ display:block; width:100%; height:auto; }
+.nepohero__pie{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px 22px;
+  background:linear-gradient(90deg, var(--nepo-azul), var(--nepo-azul-hondo)); color:#fff;
+  border-top:4px solid var(--nepo-rojo);
+}
+.nepohero__pie strong{ font-family:var(--display); font-size:1.2rem; letter-spacing:.01em; }
+.nepohero__pie span{ color:#BFE9EC; font-size:.9rem; }
+.nepohero__pie a{ margin-left:auto; }
+@media (max-width:640px){ .nepohero__pie{ padding:12px 16px; } .nepohero__pie a{ margin-left:0; } }
+
+/* El niño acompaña el título de cada pantalla de NEPO */
+body[data-modulo="nepo"] .topbar__ctx{ position:relative; padding-left:60px; min-height:54px; display:flex; flex-direction:column; justify-content:center; }
+body[data-modulo="nepo"] .topbar__ctx::before{
+  content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:46px; height:56px;
+  background:url("../assets/nepo-nino.png") center/contain no-repeat;
+}
+@media (max-width:640px){
+  body[data-modulo="nepo"] .topbar__ctx{ padding-left:48px; min-height:44px; }
+  body[data-modulo="nepo"] .topbar__ctx::before{ width:36px; height:44px; }
+}

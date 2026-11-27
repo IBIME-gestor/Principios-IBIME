@@ -1,0 +1,11 @@
+Copia estos archivos sobre tu proyecto, respetando las carpetas (reemplazan o agregan).
+
+DESPUÉS, BORRA de tu repositorio estos 6 archivos, que ahora viven en js/modulos/:
+  js/views/alumnos.js
+  js/views/asistencia.js
+  js/views/consulta.js
+  js/views/inicio.js
+  js/views/principios.js   (ahora es js/modulos/principios/anio.js)
+  js/views/usuarios.js     (ahora es js/modulos/comun/usuarios.js)
+
+Y recuerda copiar completo firestore.rules en la consola de Firebase.

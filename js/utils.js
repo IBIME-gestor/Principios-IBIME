@@ -208,7 +208,7 @@ export function rebote(fn, ms = 180) {
 
 export function vacio({ titulo, texto, boton }) {
   return `<div class="vacio">
-    <img src="assets/escudo-ibime.png" alt="">
+    <img src="${document.body.dataset.modulo === "nepo" ? "assets/nepo-nino.png" : "assets/escudo-ibime.png"}" alt="">
     <h3>${esc(titulo)}</h3>
     <p>${esc(texto)}</p>
     ${boton ? `<button class="btn" id="${boton.id}">${esc(boton.texto)}</button>` : ""}

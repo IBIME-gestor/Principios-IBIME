@@ -24,9 +24,14 @@ export async function render(cont) {
   const sinCerrar = ss.filter(s => s.estado !== "cerrada" && s.fecha < hoy).sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
   const nombreClase = id => clases.find(c => c.id === id)?.nombre || "";
 
-  if (!clases.length) { cont.innerHTML = `<div class="caja">${vacio({ titulo: "Aún no tienes clases", texto: "Cuando la administración te asigne una, aparecerá aquí." })}</div>`; return; }
+  if (!clases.length) { cont.innerHTML = `<div class="cascada"><div class="nepohero"><img src="assets/nepo-banner.jpg" alt="NEPO · IBIME"></div><div class="caja">${vacio({ titulo: "Aún no tienes clases", texto: "Cuando la administración te asigne una, aparecerá aquí." })}</div></div>`; return; }
 
   cont.innerHTML = `<div class="cascada">
+    <div class="nepohero">
+      <img src="assets/nepo-banner.jpg" alt="NEPO · IBIME: el niño con su ábaco, junto a la familia jaguar">
+      <div class="nepohero__pie"><strong>NEPO</strong><span>${esc(NEPO.nombreCompleto)} · capacitaciones para familias</span>
+        <a class="btn btn--chico" href="#/nepo/asistencia">Pasar lista</a></div>
+    </div>
     <div class="rejilla rejilla--4">
       <div class="dato"><b>${clases.length}</b><span>clases activas</span></div>
       <div class="dato"><b>${new Set(ins.map(i => i.familiarId)).size}</b><span>familiares inscritos</span></div>

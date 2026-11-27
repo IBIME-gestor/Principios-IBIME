@@ -292,6 +292,10 @@ function pintarNav(modNav, mod, vista) {
     `<a href="#/${v.mod}/${v.id}" class="navlink ${v.mod === mod && v.id === vista ? "is-on" : ""}">
        <span class="navlink__ico">${v.ico}</span> ${esc(v.texto)}</a>`).join("");
   $("#rail-marca").innerHTML = `${esc(MODULOS[modNav].marca)}<br><b>IBIME</b>`;
+  /* Cada módulo trae su propio tema (colores y figura) */
+  document.body.dataset.modulo = modNav;
+  const escudo = document.querySelector(".rail__shield");
+  if (escudo) escudo.src = modNav === "nepo" ? "assets/nepo-nino.png" : "assets/escudo-ibime.png";
 }
 
 async function enrutar() {
